@@ -18,10 +18,9 @@ router.post('/:id/importar', async (req, res) => {
   if (!conn) return res.status(503).json({ error: 'Não foi possível acessar o banco.' });
   try {
     await conn.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
-    const tables = (await conn.query('SELECT id,nome,modelo_excel,modelo_nome,celulas FROM tabelas WHERE id=ANY($1::int[]) ORDER BY id FOR UPDATE', [[origem,destino]])).rows;
+    const tables = (await conn.query('SELECT id,nome,celulas FROM tabelas WHERE id=ANY($1::int[]) ORDER BY id FOR UPDATE', [[origem,destino]])).rows;
     const src = tables.find(t => t.id === origem), dst = tables.find(t => t.id === destino);
     if (!src || !dst) throw new Error('Tabela de origem ou destino não encontrada.');
-    if (!src.modelo_excel) throw new Error('A tabela de origem não possui modelo Excel.');
     const elementos = (await conn.query('SELECT * FROM elementos WHERE tabela_id=ANY($1::int[]) AND ativo ORDER BY id', [[origem,destino]])).rows;
     const origemEls = elementos.filter(e => e.tabela_id === origem), destinoEls = elementos.filter(e => e.tabela_id === destino);
     const srcEls = indexUnique(origemEls, e => key(e.nome), 'elemento na origem');
@@ -46,7 +45,7 @@ router.post('/:id/importar', async (req, res) => {
     for (const [field, pos] of Object.entries(src.celulas || {})) {
       if (pos && positions.has(key(pos))) throw new Error(`A célula ${pos} do campo ${field} conflita com um elemento no destino.`);
     }
-    await conn.query('UPDATE tabelas SET modelo_excel=$1,modelo_nome=$2,celulas=$3 WHERE id=$4', [src.modelo_excel,src.modelo_nome,JSON.stringify(src.celulas),destino]);
+    await conn.query('UPDATE tabelas SET celulas=$1 WHERE id=$2', [JSON.stringify(src.celulas),destino]);
     let farin = 0, elem = 0, inter = 0;
     for (const [k, f] of srcFlour) {
       if (dstFlour.has(k)) await conn.query('UPDATE farinhas SET produto=$1 WHERE id=$2', [f.produto, dstFlour.get(k).id]);
