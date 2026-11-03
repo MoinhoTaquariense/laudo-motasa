@@ -21,7 +21,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD}
       DB_NAME: laudos
       APP_PASSWORD: ${APP_PASSWORD:?Defina APP_PASSWORD}
-      COOKIE_SECURE: "true"
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
     depends_on:
       db:
         condition: service_healthy

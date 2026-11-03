@@ -6,15 +6,15 @@ A aplicação usa um frontend Nginx, uma API Node com Python para gerar planilha
 
 - Faça commit apenas dos arquivos necessários. `.env`, dependências, planilhas locais, compactados e a pasta antiga `PR PYTHON` são ignorados. Confira o conteúdo antes do commit. Não coloque senhas, laudos ou dados de clientes no repositório.
 - Crie duas senhas diferentes e longas: uma para `DB_PASSWORD` e outra para `APP_PASSWORD` (no mínimo 12 caracteres, preferencialmente mais). Para facilitar a configuração no Compose, use caracteres alfanuméricos gerados aleatoriamente.
-- Tenha um domínio apontado para o servidor e configure HTTPS no Dokploy antes de utilizar o sistema. O cookie de autenticação em produção exige HTTPS.
+- Para uso interno por HTTP, configure `COOKIE_SECURE=false` no Dokploy. Em acesso por HTTPS, mantenha `COOKIE_SECURE=true`. Em HTTP, a senha e a sessão trafegam sem criptografia na rede.
 
 ## Criar a aplicação
 
 1. Envie o projeto para um repositório Git privado e crie no Dokploy um serviço **Docker Compose** apontando para ele, com caminho `compose.yaml` na raiz.
-2. Na seção Environment do serviço, defina `DB_PASSWORD` e `APP_PASSWORD`. Essas variáveis são referenciadas explicitamente pelo Compose. Não use os valores de exemplo.
-3. Na aba Domains, adicione o domínio apontando para o serviço `frontend`, porta interna `80`, e habilite HTTPS com certificado. Consulte a documentação de domínios do Dokploy: https://docs.dokploy.com/docs/core/docker-compose/domains
+2. Na seção Environment do serviço, defina `DB_PASSWORD` e `APP_PASSWORD`. Para HTTP interno, defina também `COOKIE_SECURE=false`. Essas variáveis são referenciadas explicitamente pelo Compose. Não use os valores de exemplo.
+3. Na aba Domains, adicione o domínio apontando para o serviço `frontend`, porta interna `80`. Para HTTPS, habilite o certificado. Consulte a documentação de domínios do Dokploy: https://docs.dokploy.com/docs/core/docker-compose/domains
 4. Execute o deploy. O PostgreSQL cria um banco vazio na primeira execução; a API aplica a atualização de esquema ao iniciar. Aguarde os serviços subirem e confira os logs.
-5. Acesse por HTTPS, entre com `APP_PASSWORD`, cadastre uma tabela, seu modelo Excel, farinhas, produtos, elementos e intervalos, e teste a geração e abertura de um laudo.
+5. Acesse pelo endereço configurado, entre com `APP_PASSWORD`, cadastre uma tabela, seu modelo Excel, farinhas, produtos, elementos e intervalos, e teste a geração e abertura de um laudo.
 
 As sessões ficam na memória da API por até oito horas: reiniciar a API encerra os acessos. Use uma única instância da API com essa configuração. A senha de acesso é compartilhada; para usuários individuais e permissões por pessoa, é necessária uma implementação adicional.
 
