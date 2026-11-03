@@ -23,3 +23,5 @@ O processamento usa a primeira aba do modelo e preserva imagens compatíveis com
 
 Em **Clientes**, cadastre o código e o nome de cada cliente. Na emissão, digite parte do código ou nome e selecione uma das sugestões; o laudo será preenchido com código e nome. Os clientes usados em emissões anteriores não são cadastrados automaticamente.
 
+
+A segunda data do lote é opcional. Para utilizá-la, informe sua célula em **Configurações → Células**. Os resultados numéricos continuam vinculados à primeira data do lote.

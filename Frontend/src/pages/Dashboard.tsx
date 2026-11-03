@@ -11,7 +11,7 @@ export default function Dashboard() {
   const [tabela, setTabela] = useState('');
   const [farinhas, setFarinhas] = useState<Farinha[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [form, setForm] = useState({ farinha:'', cliente:'', operador:'', lote:'', emissao:hoje(), validade:'' });
+  const [form, setForm] = useState({ farinha:'', cliente:'', operador:'', lote:'', lote2:'', emissao:hoje(), validade:'' });
   const [opcaoValidade, setOpcaoValidade] = useState('');
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
@@ -51,6 +51,7 @@ export default function Dashboard() {
             <div className="form-field"><label htmlFor="cliente">Cliente</label><input id="cliente" list="clientes-cadastrados" required autoComplete="off" placeholder="Digite o código ou nome" value={form.cliente} onChange={e => change('cliente',e.target.value)} /><datalist id="clientes-cadastrados">{clientes.map(c => <option key={c.id} value={`${c.codigo} - ${c.nome}`} />)}</datalist>{clientes.length === 0 && <p>Cadastre um cliente antes de emitir o laudo.</p>}</div>
             <div className="form-field"><label htmlFor="operador">Operador</label><input id="operador" required maxLength={200} placeholder="Nome do operador" value={form.operador} onChange={e => change('operador',e.target.value)} /></div>
             <div className="form-field"><label htmlFor="lote">Data do lote</label><input id="lote" required type="date" value={form.lote} onChange={e => change('lote',e.target.value)} /></div>
+            <div className="form-field"><label htmlFor="lote2">Segunda data do lote (opcional)</label><input id="lote2" type="date" value={form.lote2} onChange={e => change('lote2',e.target.value)} /></div>
             <div className="form-field"><label htmlFor="emissao">Data de emissão</label><input id="emissao" required type="date" value={form.emissao} onChange={e => change('emissao',e.target.value)} /></div>
             <div className="form-field"><label htmlFor="validade">Validade</label><select id="validade" required value={opcaoValidade} onChange={e => { setOpcaoValidade(e.target.value); change('validade', e.target.value === 'outro' ? '' : e.target.value); }}><option value="">Selecione a validade</option><option value="150 DIAS">150 DIAS</option><option value="180 DIAS">180 DIAS</option><option value="outro">Outro</option></select></div>
             {opcaoValidade === 'outro' && <div className="form-field"><label htmlFor="outra-validade">Informe a validade</label><input id="outra-validade" required placeholder="Digite a validade" value={form.validade} onChange={e => change('validade',e.target.value)} /></div>}
