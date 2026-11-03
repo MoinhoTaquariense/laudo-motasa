@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FileText, LayoutGrid, LogOut, ArrowRight } from 'lucide-react';
+import { FileText, LayoutGrid, LogOut, ArrowRight, Users } from 'lucide-react';
 
-type AppShellProps = { children: ReactNode; section?: 'laudos' | 'configuracao' };
+type AppShellProps = { children: ReactNode; section?: 'laudos' | 'configuracao' | 'clientes' };
 
 export default function AppShell({ children, section = 'laudos' }: AppShellProps) {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ export default function AppShell({ children, section = 'laudos' }: AppShellProps
       <div className="sidebar-label">ÁREA DE TRABALHO</div>
       <nav className="sidebar-nav" aria-label="Navegação principal">
         <NavLink to="/dashboard" className={`nav-link ${section === 'laudos' ? 'active' : ''}`}><FileText size={18} /><span>Emitir laudo</span><ArrowRight className="nav-arrow" size={15}/></NavLink>
+        <NavLink to="/clientes" className={`nav-link ${section === 'clientes' ? 'active' : ''}`}><Users size={18} /><span>Clientes</span><ArrowRight className="nav-arrow" size={15}/></NavLink>
         <NavLink to="/configurar" className={`nav-link ${section === 'configuracao' ? 'active' : ''}`}><LayoutGrid size={18} /><span>Configurações</span><ArrowRight className="nav-arrow" size={15}/></NavLink>
       </nav>
       <div className="sidebar-bottom"><div className="sidebar-note"><span className="note-dot" />Área de qualidade<p>Organização e emissão de laudos em um só lugar.</p></div>
@@ -20,7 +21,7 @@ export default function AppShell({ children, section = 'laudos' }: AppShellProps
       </div>
     </aside>
     <div className="app-main">
-      <header className="topbar"><div><span className="topbar-overline">MOTASA</span><span className="topbar-separator">/</span><span>{section === 'laudos' ? 'Emissão de laudos' : 'Configurações'}</span></div><span className="topbar-badge"><span className="note-dot" /> Área de qualidade</span><button type="button" className="mobile-logout" onClick={() => navigate('/login')}><LogOut size={16}/> Sair</button></header>
+      <header className="topbar"><div><span className="topbar-overline">MOTASA</span><span className="topbar-separator">/</span><span>{section === 'laudos' ? 'Emissão de laudos' : section === 'clientes' ? 'Clientes' : 'Configurações'}</span></div><span className="topbar-badge"><span className="note-dot" /> Área de qualidade</span><button type="button" className="mobile-logout" onClick={() => navigate('/login')}><LogOut size={16}/> Sair</button></header>
       <main className="content-area">{children}</main>
     </div>
   </div>;

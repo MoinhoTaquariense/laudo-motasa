@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowDownToLine, ClipboardList, FileSpreadsheet, Sparkles, Settings2 } from 'lucide-react';
 import AppShell, { PageHeading } from '@/components/AppShell';
-import { getTabelasSQL, listarFarinhas, gerarLaudo, type Farinha } from '@/lib/api';
+import { getTabelasSQL, listarFarinhas, listarClientes, gerarLaudo, type Farinha, type Cliente } from '@/lib/api';
 
 const hoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 export default function Dashboard() {
@@ -10,11 +10,13 @@ export default function Dashboard() {
   const [tabelas, setTabelas] = useState<{id:number; nome:string; modelo_nome:string | null}[]>([]);
   const [tabela, setTabela] = useState('');
   const [farinhas, setFarinhas] = useState<Farinha[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [form, setForm] = useState({ farinha:'', cliente:'', operador:'', lote:'', emissao:hoje(), validade:'' });
   const [opcaoValidade, setOpcaoValidade] = useState('');
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
   useEffect(() => { getTabelasSQL().then(setTabelas).catch(e => setErro(e.message)); }, []);
+  useEffect(() => { listarClientes().then(setClientes).catch(e => setErro(e.message)); }, []);
   useEffect(() => {
     let active = true;
     setFarinhas([]); setForm(f => ({ ...f, farinha: '' }));
@@ -25,7 +27,9 @@ export default function Dashboard() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setErro(''); setCarregando(true);
     try {
-      const blob = await gerarLaudo({ tabela_id: Number(tabela), ...form });
+      const clienteSelecionado = clientes.find(c => `${c.codigo} - ${c.nome}` === form.cliente);
+      if (!clienteSelecionado) throw new Error('Selecione um cliente cadastrado entre as sugestões.');
+      const blob = await gerarLaudo({ tabela_id: Number(tabela), ...form, cliente_id: clienteSelecionado.id });
       const url = URL.createObjectURL(blob); const a = document.createElement('a');
       a.href = url; a.download = `laudo-${form.lote}.xlsx`; a.click(); URL.revokeObjectURL(url);
     } catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível gerar o laudo.'); }
@@ -44,7 +48,7 @@ export default function Dashboard() {
           <div className="form-separator" />
           <div className="section-label"><span>02</span> Dados da emissão</div>
           <div className="form-grid">
-            <div className="form-field"><label htmlFor="cliente">Cliente</label><input id="cliente" required placeholder="Nome do cliente" value={form.cliente} onChange={e => change('cliente',e.target.value)} /></div>
+            <div className="form-field"><label htmlFor="cliente">Cliente</label><input id="cliente" list="clientes-cadastrados" required autoComplete="off" placeholder="Digite o código ou nome" value={form.cliente} onChange={e => change('cliente',e.target.value)} /><datalist id="clientes-cadastrados">{clientes.map(c => <option key={c.id} value={`${c.codigo} - ${c.nome}`} />)}</datalist>{clientes.length === 0 && <p>Cadastre um cliente antes de emitir o laudo.</p>}</div>
             <div className="form-field"><label htmlFor="operador">Operador</label><input id="operador" required maxLength={200} placeholder="Nome do operador" value={form.operador} onChange={e => change('operador',e.target.value)} /></div>
             <div className="form-field"><label htmlFor="lote">Data do lote</label><input id="lote" required type="date" value={form.lote} onChange={e => change('lote',e.target.value)} /></div>
             <div className="form-field"><label htmlFor="emissao">Data de emissão</label><input id="emissao" required type="date" value={form.emissao} onChange={e => change('emissao',e.target.value)} /></div>

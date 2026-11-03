@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 type Intervalo = { id:number; farinha:string; cliente:string; valormin:string; valormax:string; vmin_str:string | null; vmax_str:string | null; passo_meio:boolean };
 export default function Intervalos() {
   const navigate = useNavigate(); const elementoId = Number(localStorage.getItem('elementoId')); const tabelaId = Number(localStorage.getItem('tabelaId'));
-  const elementoNome = localStorage.getItem('elementoNome') || 'Elemento'; const formato = localStorage.getItem('elementoFormato'); const isTempo = formato === '7'; const permitePasso = formato === '1' || formato === '3';
+  const elementoNome = localStorage.getItem('elementoNome') || 'Elemento'; const formato = localStorage.getItem('elementoFormato'); const isTempo = formato === '7'; const permitePasso = formato === '1' || formato === '3' || formato === '8';
   const [items,setItems] = useState<Intervalo[]>([]); const [farinhas,setFarinhas] = useState<string[]>([]); const [filter,setFilter] = useState('');
   const [open,setOpen] = useState(false); const [id,setId] = useState<number | null>(null); const [form,setForm] = useState({farinha:'', min:'', max:'', passo_meio:false}); const [error,setError] = useState(''); const [salvando,setSalvando] = useState(false);
   const load = () => getIntervalosByElementoSQL(elementoId).then(setItems).catch(e => setError(e.message));

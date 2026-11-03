@@ -3,6 +3,14 @@
 ALTER TABLE tabelas ADD COLUMN IF NOT EXISTS modelo_excel BYTEA;
 ALTER TABLE tabelas ADD COLUMN IF NOT EXISTS modelo_nome TEXT;
 ALTER TABLE tabelas ADD COLUMN IF NOT EXISTS celulas JSONB NOT NULL DEFAULT '{"cliente":"C5","produto":"C6","lote":"C8","validade":"C9","emissao":"G9"}'::jsonb;
+CREATE TABLE IF NOT EXISTS clientes (
+  id SERIAL PRIMARY KEY,
+  codigo VARCHAR(100) NOT NULL CHECK (trim(codigo) <> ''),
+  nome VARCHAR(200) NOT NULL CHECK (trim(nome) <> '')
+);
+CREATE UNIQUE INDEX IF NOT EXISTS clientes_codigo_unico ON clientes (lower(trim(codigo)));
+ALTER TABLE elementos DROP CONSTRAINT IF EXISTS elementos_formato_check;
+ALTER TABLE elementos ADD CONSTRAINT elementos_formato_check CHECK (formato BETWEEN 1 AND 8);
 ALTER TABLE intervalos ADD COLUMN IF NOT EXISTS farinha TEXT;
 ALTER TABLE intervalos ADD COLUMN IF NOT EXISTS passo_meio BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE intervalos ADD COLUMN IF NOT EXISTS vmin_str VARCHAR(50);

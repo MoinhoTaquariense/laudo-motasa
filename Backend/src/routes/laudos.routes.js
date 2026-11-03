@@ -49,6 +49,7 @@ function sortear(row) {
     const low = Math.ceil(min * 2 - 1e-8), high = Math.floor(max * 2 + 1e-8);
     if (low > high) throw new Error(`Não há múltiplos de 0,50 no intervalo de ${row.nome}.`);
     const number = (Math.floor(Math.random() * (high - low + 1)) + low) / 2;
+    if (row.formato === 8) return `${String(number).replace('.', ',')} J`;
     return row.formato === 1 ? `${number.toFixed(2)}%` : number;
   }
   const precision = (original, numeric) => {
@@ -60,6 +61,7 @@ function sortear(row) {
   const low = Math.ceil(min * scale - 1e-8), high = Math.floor(max * scale + 1e-8);
   if (low > high) throw new Error(`Intervalo inválido para ${row.nome}.`);
   const number = (Math.floor(Math.random() * (high - low + 1)) + low) / scale;
+  if (row.formato === 8) return `${number.toFixed(Math.min(places, 6)).replace('.', ',')} J`;
   return row.formato === 1 ? `${number.toFixed(Math.min(places, 6))}%` : number;
 }
 
@@ -85,14 +87,16 @@ async function escreverExcel(modelo, valores) {
 }
 
 router.post('/laudos', async (req, res) => {
-  const { tabela_id, farinha, cliente, operador, lote, emissao, validade } = req.body;
+  const { tabela_id, farinha, cliente_id, operador, lote, emissao, validade } = req.body;
   const dateValid = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '') && !isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0,10) === s;
-  if (!Number.isInteger(Number(tabela_id)) || ![farinha, cliente, operador, validade].every(s => typeof s === 'string' && s.trim()) || operador.trim().length > 200 || !dateValid(lote) || !dateValid(emissao))
+  if (!Number.isInteger(Number(tabela_id)) || !Number.isInteger(Number(cliente_id)) || Number(cliente_id) < 1 || ![farinha, operador, validade].every(s => typeof s === 'string' && s.trim()) || operador.trim().length > 200 || !dateValid(lote) || !dateValid(emissao))
     return res.status(400).json({ error: 'Preencha todos os campos e informe datas válidas.' });
   const connection = await db.connect().catch(() => null);
   if (!connection) return res.status(503).json({ error: 'Não foi possível acessar o banco de dados.' });
   try {
     await connection.query('BEGIN');
+    const cliente = (await connection.query('SELECT codigo, nome FROM clientes WHERE id=$1 FOR SHARE', [cliente_id])).rows[0];
+    if (!cliente) throw new Error('Selecione um cliente cadastrado.');
     const registered = (await connection.query('SELECT nome, produto FROM farinhas WHERE tabela_id=$1 AND lower(trim(nome))=lower(trim($2)) FOR SHARE', [tabela_id, farinha])).rows[0];
     if (!registered) throw new Error('Selecione uma farinha cadastrada nesta tabela.');
     if (!registered.produto?.trim()) throw new Error('Cadastre o nome do produto nesta farinha antes de gerar o laudo.');
@@ -106,7 +110,7 @@ router.post('/laudos', async (req, res) => {
     if (!resultados) {
       const rows = (await connection.query(`SELECT e.id, e.nome, e.posicao, e.formato, i.id AS intervalo_id, i.valormin, i.valormax, i.vmin_str, i.vmax_str, i.passo_meio
         FROM elementos e LEFT JOIN intervalos i ON i.elemento_id=e.id AND i.ativo AND lower(trim(i.farinha))=lower($2)
-        WHERE e.tabela_id=$1 AND e.ativo AND e.formato IN (1,2,3,7) ORDER BY e.id`, [tabela_id, flour])).rows;
+        WHERE e.tabela_id=$1 AND e.ativo AND e.formato IN (1,2,3,7,8) ORDER BY e.id`, [tabela_id, flour])).rows;
       if (!rows.length) throw new Error('Não há elementos numéricos configurados para esta tabela.');
       const ids = new Set(); resultados = {};
       for (const row of rows) {
@@ -118,7 +122,7 @@ router.post('/laudos', async (req, res) => {
       await connection.query('INSERT INTO laudos_gerados (tabela_id, farinha, lote, valores) VALUES ($1,$2,$3,$4)', [tabela_id, flour, lote, JSON.stringify(resultados)]);
     }
     const formatDate = s => s.split('-').reverse().join('/');
-    const values = { cliente: cliente.trim(), produto: registered.produto.trim(), operador: operador.trim(), lote: formatDate(lote), emissao: formatDate(emissao), validade: validade.trim() };
+    const values = { cliente: `${cliente.codigo} - ${cliente.nome}`, produto: registered.produto.trim(), operador: operador.trim(), lote: formatDate(lote), emissao: formatDate(emissao), validade: validade.trim() };
     const writes = { ...resultados };
     for (const field of campos) {
       const address = String(t.celulas?.[field] || '').toUpperCase();

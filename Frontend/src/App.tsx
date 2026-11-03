@@ -3,6 +3,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import Elementos from "./pages/Elementos";
 import Intervalos from "./pages/Intervalos";
 import Farinhas from "./pages/Farinhas";
+import Clientes from "./pages/Clientes";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,6 +35,7 @@ const App = () => (
           <Route element={<PrivateRoutes />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/configurar" element={<Configurar />} />
+          <Route path="/clientes" element={<Clientes />} />
           <Route path="/elementos" element={<Elementos />} />
           <Route path="/intervalos" element={<Intervalos />} />
           <Route path="/tabelas/:tabelaId/farinhas" element={<Farinhas />} />

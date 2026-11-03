@@ -37,6 +37,11 @@ export const updateIntervaloSQL         = (id: number, data: any) =>
 export const deleteIntervaloSQL         = (id: number) => req<void>(`/intervalos/${id}`, { method: 'DELETE' });
 
 export const getFarinhas = (id: number) => req<string[]>(`/farinhas?tabela_id=${id}`);
+export type Cliente = { id:number; codigo:string; nome:string };
+export const listarClientes = () => req<Cliente[]>('/clientes');
+export const criarCliente = (codigo:string, nome:string) => req<Cliente>('/clientes', { method:'POST', body:JSON.stringify({codigo,nome}) });
+export const atualizarCliente = (id:number, codigo:string, nome:string) => req<Cliente>(`/clientes/${id}`, { method:'PUT', body:JSON.stringify({codigo,nome}) });
+export const excluirCliente = (id:number) => req<void>(`/clientes/${id}`, { method:'DELETE' });
 export type Farinha = { id:number; tabela_id:number; nome:string; produto:string | null };
 export const listarFarinhas = (id: number) => req<Farinha[]>(`/farinhas-cadastro?tabela_id=${id}`);
 export const criarFarinha = (tabela_id: number, nome: string, produto: string) => req<Farinha>('/farinhas-cadastro', { method:'POST', body:JSON.stringify({tabela_id,nome,produto}) });

@@ -20,3 +20,5 @@ No painel, selecione a tabela e a farinha, informe os dados solicitados e gere o
 Se cadastros antigos tiverem mais de um intervalo para a mesma farinha e elemento, revise e exclua ou altere os duplicados antes de gerar. Se faltar um intervalo para algum elemento numérico, o sistema avisa qual elemento precisa de configuração.
 
 O processamento usa a primeira aba do modelo e preserva imagens compatíveis com openpyxl. Confira o primeiro arquivo gerado de cada modelo, especialmente se ele tiver recursos avançados do Excel.
+
+Em **Clientes**, cadastre o código e o nome de cada cliente. Na emissão, digite parte do código ou nome e selecione uma das sugestões; o laudo será preenchido com código e nome. Os clientes usados em emissões anteriores não são cadastrados automaticamente.

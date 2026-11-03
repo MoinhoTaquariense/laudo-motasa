@@ -30,7 +30,7 @@ const validarPasso = async (elemento, min, max, passo) => {
   if (passo === undefined || passo === false) return null;
   if (passo !== true) return 'Opção de intervalos de 0,50 inválida.';
   const result = await db.query('SELECT formato FROM elementos WHERE id=$1', [elemento]);
-  if (![1, 3].includes(result.rows[0]?.formato)) return 'A opção de 0,50 está disponível para elementos percentuais e decimais.';
+  if (![1, 3, 8].includes(result.rows[0]?.formato)) return 'A opção de 0,50 está disponível para elementos percentuais, decimais e Joules.';
   if (Math.ceil(Number(min) * 2 - 1e-8) > Math.floor(Number(max) * 2 + 1e-8)) return 'Não há múltiplos de 0,50 dentro deste intervalo.';
   return null;
 };

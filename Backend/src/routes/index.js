@@ -12,6 +12,7 @@ router.use('/tabelas',   tabelasRoutes);
 router.use('/elementos', elementosRoutes);
 router.use('/intervalos', intervalosRoutes);
 router.use('/farinhas-cadastro', require('./farinhas.routes'));
+router.use('/clientes', require('./clientes.routes'));
 router.use('/', require('./laudos.routes'));
 
 module.exports = router;
