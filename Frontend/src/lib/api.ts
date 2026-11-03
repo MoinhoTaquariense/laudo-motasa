@@ -20,6 +20,8 @@ export const createTabelaSQL      = (nome: string)    => req<any>('/tabelas', { 
 export const updateTabelaSQL      = (id: number, nome: string) => req<any>(`/tabelas/${id}`, { method: 'PUT', body: JSON.stringify({ nome }) });
 export const deleteTabelaSQL      = (id: number)      => req<void>(`/tabelas/${id}`, { method: 'DELETE' });
 
+export const importarTabela = (destino:number, origem_id:number) => req<{elementos:number; farinhas:number; intervalos:number}>(`/tabelas/${destino}/importar`, { method:'POST', body:JSON.stringify({origem_id}) });
+
 // ── Elementos ────────────────────────────────────────────────
 export const getElementsByTabelaSQL = (tabela_id: number) => req<any[]>(`/elementos?tabela_id=${tabela_id}`);
 export const createElementoSQL      = (data: { nome: string; posicao: string; tipo: number; tabela_id: number }) =>

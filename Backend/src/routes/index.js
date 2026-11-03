@@ -8,6 +8,7 @@ router.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'API funcionando' });
 });
 
+router.use('/tabelas', require('./importar.routes'));
 router.use('/tabelas',   tabelasRoutes);
 router.use('/elementos', elementosRoutes);
 router.use('/intervalos', intervalosRoutes);
