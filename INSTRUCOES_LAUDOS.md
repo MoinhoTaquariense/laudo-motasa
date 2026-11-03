@@ -9,7 +9,7 @@
 
 ## Configurar e emitir
 
-Em **Configurar dados**, cadastre a tabela, envie seu modelo `.xlsx` com a logo e configure as células de cliente, produto, lote, validade e emissão. As posições sugeridas correspondem ao modelo `P1.xlsx`; confira-as em cada modelo. Para células mescladas, use a célula superior esquerda.
+Em **Configurar dados**, cadastre a tabela, envie seu modelo `.xlsx` com a logo e configure as células de cliente, produto, lote, validade, emissão e operador. Informe a célula do operador para cada tabela, inclusive as já cadastradas, escolhendo a posição correta no seu modelo. As demais posições sugeridas correspondem ao modelo `P1.xlsx`; confira-as em cada modelo. Para células mescladas, use a célula superior esquerda.
 
 Em **Farinhas**, cadastre o nome ou código de cada farinha e o nome do produto que aparecerá no laudo. Para farinhas já cadastradas, use Editar para informar o produto. Os nomes existentes nos intervalos antigos são incluídos automaticamente nessa lista pela atualização do banco. É possível renomear uma farinha; seus intervalos e laudos anteriores acompanham o novo nome. Farinhas com intervalos ou laudos não podem ser excluídas.
 

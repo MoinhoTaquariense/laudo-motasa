@@ -6,8 +6,8 @@ import { getTabelasSQL, createTabelaSQL, updateTabelaSQL, getElementsByTabelaSQL
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type Tabela = {id:number; nome:string; modelo_nome:string | null; celulas:Record<string,string>};
-const defaultCells = {cliente:'C5', produto:'C6', lote:'C8', validade:'C9', emissao:'G9'};
-const labels:Record<string,string> = {cliente:'Cliente', produto:'Produto', lote:'Lote', validade:'Validade', emissao:'Emissão'};
+const defaultCells = {cliente:'C5', produto:'C6', lote:'C8', validade:'C9', emissao:'G9', operador:''};
+const labels:Record<string,string> = {cliente:'Cliente', produto:'Produto', lote:'Lote', validade:'Validade', emissao:'Emissão', operador:'Operador'};
 export default function Configurar() {
   const navigate = useNavigate(); const fileRef = useRef<HTMLInputElement>(null); const uploadId = useRef<number | null>(null);
   const [tabelas,setTabelas] = useState<Tabela[]>([]); const [selecionada,setSelecionada] = useState<Tabela | null>(null);

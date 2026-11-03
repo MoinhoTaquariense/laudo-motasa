@@ -10,7 +10,7 @@ export default function Dashboard() {
   const [tabelas, setTabelas] = useState<{id:number; nome:string; modelo_nome:string | null}[]>([]);
   const [tabela, setTabela] = useState('');
   const [farinhas, setFarinhas] = useState<Farinha[]>([]);
-  const [form, setForm] = useState({ farinha:'', cliente:'', lote:'', emissao:hoje(), validade:'' });
+  const [form, setForm] = useState({ farinha:'', cliente:'', operador:'', lote:'', emissao:hoje(), validade:'' });
   const [opcaoValidade, setOpcaoValidade] = useState('');
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
@@ -45,6 +45,7 @@ export default function Dashboard() {
           <div className="section-label"><span>02</span> Dados da emissão</div>
           <div className="form-grid">
             <div className="form-field"><label htmlFor="cliente">Cliente</label><input id="cliente" required placeholder="Nome do cliente" value={form.cliente} onChange={e => change('cliente',e.target.value)} /></div>
+            <div className="form-field"><label htmlFor="operador">Operador</label><input id="operador" required maxLength={200} placeholder="Nome do operador" value={form.operador} onChange={e => change('operador',e.target.value)} /></div>
             <div className="form-field"><label htmlFor="lote">Data do lote</label><input id="lote" required type="date" value={form.lote} onChange={e => change('lote',e.target.value)} /></div>
             <div className="form-field"><label htmlFor="emissao">Data de emissão</label><input id="emissao" required type="date" value={form.emissao} onChange={e => change('emissao',e.target.value)} /></div>
             <div className="form-field"><label htmlFor="validade">Validade</label><select id="validade" required value={opcaoValidade} onChange={e => { setOpcaoValidade(e.target.value); change('validade', e.target.value === 'outro' ? '' : e.target.value); }}><option value="">Selecione a validade</option><option value="150 DIAS">150 DIAS</option><option value="180 DIAS">180 DIAS</option><option value="outro">Outro</option></select></div>

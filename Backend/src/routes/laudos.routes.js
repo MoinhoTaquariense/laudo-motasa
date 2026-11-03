@@ -7,7 +7,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
-const campos = ['cliente', 'produto', 'lote', 'validade', 'emissao'];
+const campos = ['cliente', 'produto', 'lote', 'validade', 'emissao', 'operador'];
 const cellPattern = /^[A-Z]{1,3}[1-9][0-9]{0,6}$/;
 
 router.post('/tabelas/:id/modelo', upload.single('modelo'), async (req, res) => {
@@ -85,9 +85,9 @@ async function escreverExcel(modelo, valores) {
 }
 
 router.post('/laudos', async (req, res) => {
-  const { tabela_id, farinha, cliente, lote, emissao, validade } = req.body;
+  const { tabela_id, farinha, cliente, operador, lote, emissao, validade } = req.body;
   const dateValid = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '') && !isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0,10) === s;
-  if (!Number.isInteger(Number(tabela_id)) || ![farinha, cliente, validade].every(s => typeof s === 'string' && s.trim()) || !dateValid(lote) || !dateValid(emissao))
+  if (!Number.isInteger(Number(tabela_id)) || ![farinha, cliente, operador, validade].every(s => typeof s === 'string' && s.trim()) || operador.trim().length > 200 || !dateValid(lote) || !dateValid(emissao))
     return res.status(400).json({ error: 'Preencha todos os campos e informe datas válidas.' });
   const connection = await db.connect().catch(() => null);
   if (!connection) return res.status(503).json({ error: 'Não foi possível acessar o banco de dados.' });
@@ -100,6 +100,7 @@ router.post('/laudos', async (req, res) => {
     await connection.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`${tabela_id}:${flour.toLocaleLowerCase('pt-BR')}:${lote}`]);
     const t = (await connection.query('SELECT modelo_excel, celulas FROM tabelas WHERE id=$1', [tabela_id])).rows[0];
     if (!t?.modelo_excel) throw new Error('Envie um modelo Excel para esta tabela antes de gerar o laudo.');
+    if (!cellPattern.test(String(t.celulas?.operador || '').toUpperCase())) throw new Error('Configure a célula do operador em Configurações → Células antes de gerar o laudo.');
     const existing = (await connection.query('SELECT valores FROM laudos_gerados WHERE tabela_id=$1 AND lower(farinha)=lower($2) AND lote=$3', [tabela_id, flour, lote])).rows[0];
     let resultados = existing?.valores;
     if (!resultados) {
@@ -117,7 +118,7 @@ router.post('/laudos', async (req, res) => {
       await connection.query('INSERT INTO laudos_gerados (tabela_id, farinha, lote, valores) VALUES ($1,$2,$3,$4)', [tabela_id, flour, lote, JSON.stringify(resultados)]);
     }
     const formatDate = s => s.split('-').reverse().join('/');
-    const values = { cliente: cliente.trim(), produto: registered.produto.trim(), lote: formatDate(lote), emissao: formatDate(emissao), validade: validade.trim() };
+    const values = { cliente: cliente.trim(), produto: registered.produto.trim(), operador: operador.trim(), lote: formatDate(lote), emissao: formatDate(emissao), validade: validade.trim() };
     const writes = { ...resultados };
     for (const field of campos) {
       const address = String(t.celulas?.[field] || '').toUpperCase();
