@@ -1,0 +1,6 @@
+Umidade: 13.01-16, G12, P
+Cinzas: 0.00-1.0, G13, N
+GlutenU: 50.0-51.0, G14, P
+teste: 4-10, G43, N, {V1} à {V2} mg /100g de farinha
+Escherichia: 3-10, I34, N, Máx. {V1} x 10, {V2}
+nome: Vitor, D2, T

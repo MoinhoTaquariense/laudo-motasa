@@ -1,0 +1,44 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    expose:
+      - "80"
+  backend:
+    build:
+      context: .
+      dockerfile: Backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "9000"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: laudos
+      DB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD}
+      DB_NAME: laudos
+      APP_PASSWORD: ${APP_PASSWORD:?Defina APP_PASSWORD}
+      COOKIE_SECURE: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: laudos
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD}
+      POSTGRES_DB: laudos
+    volumes:
+      - laudos_db:/var/lib/postgresql/data
+      - ./Backend/init.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laudos -d laudos"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+volumes:
+  laudos_db:

@@ -1,0 +1,14 @@
+require('dotenv').config();
+const express = require('express');
+const { router: auth, requireAuth, sameOrigin } = require('./src/auth');
+const routes = require('./src/routes');
+const app = express();
+const PORT = process.env.PORT || 9000;
+app.disable('x-powered-by');
+app.use(express.json({ limit: '1mb' }));
+app.use('/api', sameOrigin);
+app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+app.use('/api/auth', auth);
+app.use('/api', requireAuth, routes);
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+module.exports = app;
