@@ -9,6 +9,23 @@ router.get('/', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+router.get('/:id/detalhes', async (req, res) => {
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: 'Farinha inválida.' });
+  try {
+    const farinha = (await db.query('SELECT id,tabela_id,nome,produto FROM farinhas WHERE id=$1', [req.params.id])).rows[0];
+    if (!farinha) return res.status(404).json({ error: 'Farinha não encontrada.' });
+    const { rows } = await db.query(`SELECT e.id, e.nome, e.posicao, e.formato,
+      COALESCE(json_agg(json_build_object('id', i.id, 'valormin', i.valormin, 'valormax', i.valormax,
+        'vmin_str', i.vmin_str, 'vmax_str', i.vmax_str, 'passo_meio', i.passo_meio, 'cliente', i.cliente) ORDER BY i.id)
+        FILTER (WHERE i.id IS NOT NULL), '[]'::json) AS intervalos
+      FROM elementos e LEFT JOIN intervalos i ON i.elemento_id=e.id AND i.ativo
+        AND lower(trim(i.farinha))=lower(trim($2))
+      WHERE e.tabela_id=$1 AND e.ativo
+      GROUP BY e.id ORDER BY e.id`, [farinha.tabela_id, farinha.nome]);
+    res.json({ ...farinha, elementos: rows });
+  } catch (e) { res.status(500).json({ error: 'Não foi possível carregar os detalhes da farinha.' }); }
+});
+
 router.post('/', async (req, res) => {
   const nome = typeof req.body.nome === 'string' ? req.body.nome.trim() : '';
   const produto = typeof req.body.produto === 'string' ? req.body.produto.trim() : '';

@@ -20,7 +20,6 @@ export const createTabelaSQL      = (nome: string)    => req<any>('/tabelas', { 
 export const updateTabelaSQL      = (id: number, nome: string) => req<any>(`/tabelas/${id}`, { method: 'PUT', body: JSON.stringify({ nome }) });
 export const deleteTabelaSQL      = (id: number)      => req<void>(`/tabelas/${id}`, { method: 'DELETE' });
 
-export const importarTabela = (destino:number, origem_id:number) => req<{elementos:number; farinhas:number; intervalos:number}>(`/tabelas/${destino}/importar`, { method:'POST', body:JSON.stringify({origem_id}) });
 
 // ── Elementos ────────────────────────────────────────────────
 export const getElementsByTabelaSQL = (tabela_id: number) => req<any[]>(`/elementos?tabela_id=${tabela_id}`);
@@ -45,6 +44,8 @@ export const criarCliente = (codigo:string, nome:string) => req<Cliente>('/clien
 export const atualizarCliente = (id:number, codigo:string, nome:string) => req<Cliente>(`/clientes/${id}`, { method:'PUT', body:JSON.stringify({codigo,nome}) });
 export const excluirCliente = (id:number) => req<void>(`/clientes/${id}`, { method:'DELETE' });
 export type Farinha = { id:number; tabela_id:number; nome:string; produto:string | null };
+export type DetalhesFarinha = Farinha & { elementos: { id:number; nome:string; posicao:string; formato:number; intervalos: { id:number; valormin:number | string; valormax:number | string; vmin_str:string | null; vmax_str:string | null; passo_meio:boolean; cliente:string }[] }[] };
+export const detalhesFarinha = (id:number) => req<DetalhesFarinha>(`/farinhas-cadastro/${id}/detalhes`);
 export const listarFarinhas = (id: number) => req<Farinha[]>(`/farinhas-cadastro?tabela_id=${id}`);
 export const criarFarinha = (tabela_id: number, nome: string, produto: string) => req<Farinha>('/farinhas-cadastro', { method:'POST', body:JSON.stringify({tabela_id,nome,produto}) });
 export const renomearFarinha = (id:number, nome:string, produto:string) => req<Farinha>(`/farinhas-cadastro/${id}`, { method:'PUT', body:JSON.stringify({nome,produto}) });

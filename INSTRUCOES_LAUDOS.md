@@ -23,4 +23,3 @@ O processamento usa a primeira aba do modelo e preserva imagens compatíveis com
 
 Em **Clientes**, cadastre o código e o nome de cada cliente. Na emissão, digite parte do código ou nome e selecione uma das sugestões; o laudo será preenchido com código e nome. Os clientes usados em emissões anteriores não são cadastrados automaticamente.
 
-Em **Configurações**, use **Importar valores** na tabela de destino e escolha a tabela de origem. O modelo Excel do destino é mantido e as células são substituídas; elementos são identificados pelo nome e intervalos pela farinha. Farinhas, elementos e intervalos exclusivos do destino são preservados. Resultados de laudos já emitidos não são alterados; para um lote já emitido eles continuam sendo reutilizados. Confira os intervalos dos elementos e farinhas que permanecerem exclusivos após importar.
