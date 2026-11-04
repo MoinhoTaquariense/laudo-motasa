@@ -35,19 +35,30 @@ const validarPasso = async (elemento, min, max, passo) => {
   return null;
 };
 
+const validarPassoTempo = async (elemento, min, max, passo) => {
+  if (passo === undefined || passo === false) return null;
+  if (passo !== true) return 'Opção de tempo inválida.';
+  const result = await db.query('SELECT formato FROM elementos WHERE id=$1', [elemento]);
+  if (result.rows[0]?.formato !== 7) return 'A opção de 5 segundos está disponível somente para elementos de tempo.';
+  if (Number(min) < 0 || Math.ceil(Number(min) / 5) > Math.floor(Number(max) / 5)) return 'Não há valores de 5 em 5 segundos dentro deste intervalo.';
+  return null;
+};
+
 const create = async (req, res) => {
   try {
-    const { elemento_id, farinha, valorMin, valorMax, vmin_str, vmax_str, passo_meio } = req.body;
+    const { elemento_id, farinha, valorMin, valorMax, vmin_str, vmax_str, passo_meio, passo_cinco_segundos } = req.body;
     if (!elemento_id || !farinha?.trim() || valorMin == null || valorMax == null)
       return res.status(400).json({ error: 'Informe farinha e os limites do intervalo.' });
     if (!Number.isFinite(Number(valorMin)) || !Number.isFinite(Number(valorMax)) || Number(valorMax) <= Number(valorMin))
       return res.status(400).json({ error: 'valorMax deve ser maior que valorMin' });
     const erroPasso = await validarPasso(elemento_id, valorMin, valorMax, passo_meio);
     if (erroPasso) return res.status(400).json({ error: erroPasso });
+    const erroTempo = await validarPassoTempo(elemento_id, valorMin, valorMax, passo_cinco_segundos);
+    if (erroTempo) return res.status(400).json({ error: erroTempo });
     const nomeFarinha = await farinhaCadastrada(elemento_id, farinha);
     if (!nomeFarinha) return res.status(400).json({ error: 'Cadastre e selecione uma farinha desta tabela.' });
     if (await repetido(elemento_id, nomeFarinha)) return res.status(409).json({ error: 'Já existe intervalo para este elemento e farinha.' });
-    res.status(201).json(await svc.create({ elemento_id, farinha: nomeFarinha, valorMin, valorMax, vmin_str, vmax_str, passo_meio }));
+    res.status(201).json(await svc.create({ elemento_id, farinha: nomeFarinha, valorMin, valorMax, vmin_str, vmax_str, passo_meio, passo_cinco_segundos }));
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
@@ -60,6 +71,8 @@ const update = async (req, res) => {
     if (!atual) return res.status(404).json({ error: 'Intervalo não encontrado' });
     const erroPasso = await validarPasso(atual.elemento_id, valorMin, valorMax, req.body.passo_meio ?? atual.passo_meio);
     if (erroPasso) return res.status(400).json({ error: erroPasso });
+    const erroTempo = await validarPassoTempo(atual.elemento_id, valorMin, valorMax, req.body.passo_cinco_segundos ?? atual.passo_cinco_segundos);
+    if (erroTempo) return res.status(400).json({ error: erroTempo });
     const nomeFarinha = await farinhaCadastrada(atual.elemento_id, farinha);
     if (!nomeFarinha) return res.status(400).json({ error: 'Cadastre e selecione uma farinha desta tabela.' });
     if (await repetido(atual.elemento_id, nomeFarinha, req.params.id)) return res.status(409).json({ error: 'Já existe outro intervalo para este elemento e farinha. Exclua ou altere o repetido.' });

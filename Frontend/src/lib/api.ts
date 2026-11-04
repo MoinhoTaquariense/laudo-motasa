@@ -31,7 +31,7 @@ export const deleteElementoSQL      = (id: number) => req<void>(`/elementos/${id
 
 // ── Intervalos ───────────────────────────────────────────────
 export const getIntervalosByElementoSQL = (elemento_id: number) => req<any[]>(`/intervalos?elemento_id=${elemento_id}`);
-export const createIntervaloSQL         = (data: { elemento_id: number; farinha: string; valorMin: number; valorMax: number; vmin_str: string; vmax_str: string; passo_meio: boolean }) =>
+export const createIntervaloSQL         = (data: { elemento_id: number; farinha: string; valorMin: number; valorMax: number; vmin_str: string; vmax_str: string; passo_meio: boolean; passo_cinco_segundos?: boolean }) =>
   req<any>('/intervalos', { method: 'POST', body: JSON.stringify(data) });
 export const updateIntervaloSQL         = (id: number, data: any) =>
   req<any>(`/intervalos/${id}`, { method: 'PUT', body: JSON.stringify(data) });
@@ -44,7 +44,7 @@ export const criarCliente = (codigo:string, nome:string) => req<Cliente>('/clien
 export const atualizarCliente = (id:number, codigo:string, nome:string) => req<Cliente>(`/clientes/${id}`, { method:'PUT', body:JSON.stringify({codigo,nome}) });
 export const excluirCliente = (id:number) => req<void>(`/clientes/${id}`, { method:'DELETE' });
 export type Farinha = { id:number; tabela_id:number; nome:string; produto:string | null };
-export type DetalhesFarinha = Farinha & { elementos: { id:number; nome:string; posicao:string; formato:number; intervalos: { id:number; valormin:number | string; valormax:number | string; vmin_str:string | null; vmax_str:string | null; passo_meio:boolean; cliente:string }[] }[] };
+export type DetalhesFarinha = Farinha & { elementos: { id:number; nome:string; posicao:string; formato:number; intervalos: { id:number; valormin:number | string; valormax:number | string; vmin_str:string | null; vmax_str:string | null; passo_meio:boolean; passo_cinco_segundos:boolean; cliente:string }[] }[] };
 export const detalhesFarinha = (id:number) => req<DetalhesFarinha>(`/farinhas-cadastro/${id}/detalhes`);
 export const listarFarinhas = (id: number) => req<Farinha[]>(`/farinhas-cadastro?tabela_id=${id}`);
 export const criarFarinha = (tabela_id: number, nome: string, produto: string) => req<Farinha>('/farinhas-cadastro', { method:'POST', body:JSON.stringify({tabela_id,nome,produto}) });

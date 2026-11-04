@@ -44,6 +44,12 @@ router.get('/farinhas', async (req, res) => {
 function sortear(row) {
   const min = Number(row.valormin), max = Number(row.valormax);
   if (row.formato === 7) {
+    if (row.passo_cinco_segundos) {
+      const low = Math.ceil(min / 5), high = Math.floor(max / 5);
+      if (low > high) throw new Error(`Não há valores de 5 em 5 segundos no intervalo de ${row.nome}.`);
+      const seconds = (Math.floor(Math.random() * (high - low + 1)) + low) * 5;
+      return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+    }
     const seconds = Math.floor(Math.random() * (Math.floor(max) - Math.ceil(min) + 1)) + Math.ceil(min);
     return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   }
@@ -52,7 +58,7 @@ function sortear(row) {
     if (low > high) throw new Error(`Não há múltiplos de 0,50 no intervalo de ${row.nome}.`);
     const number = (Math.floor(Math.random() * (high - low + 1)) + low) / 2;
     if (row.formato === 8) return `${String(number).replace('.', ',')} J`;
-    return row.formato === 1 ? `${number.toFixed(2)}%` : number;
+    return row.formato === 1 ? `${number.toFixed(2).replace('.', ',')}%` : number;
   }
   const precision = (original, numeric) => {
     const value = original == null ? String(numeric).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '') : String(original);
@@ -64,7 +70,7 @@ function sortear(row) {
   if (low > high) throw new Error(`Intervalo inválido para ${row.nome}.`);
   const number = (Math.floor(Math.random() * (high - low + 1)) + low) / scale;
   if (row.formato === 8) return `${number.toFixed(Math.min(places, 6)).replace('.', ',')} J`;
-  return row.formato === 1 ? `${number.toFixed(Math.min(places, 6))}%` : number;
+  return row.formato === 1 ? `${number.toFixed(Math.min(places, 6)).replace('.', ',')}%` : number;
 }
 
 function pythonPath() {
@@ -111,7 +117,7 @@ router.post('/laudos', async (req, res) => {
     const existing = (await connection.query('SELECT valores FROM laudos_gerados WHERE tabela_id=$1 AND lower(farinha)=lower($2) AND lote=$3', [tabela_id, flour, lote])).rows[0];
     let resultados = existing?.valores;
     if (!resultados) {
-      const rows = (await connection.query(`SELECT e.id, e.nome, e.posicao, e.formato, i.id AS intervalo_id, i.valormin, i.valormax, i.vmin_str, i.vmax_str, i.passo_meio
+      const rows = (await connection.query(`SELECT e.id, e.nome, e.posicao, e.formato, i.id AS intervalo_id, i.valormin, i.valormax, i.vmin_str, i.vmax_str, i.passo_meio, i.passo_cinco_segundos
         FROM elementos e LEFT JOIN intervalos i ON i.elemento_id=e.id AND i.ativo AND lower(trim(i.farinha))=lower($2)
         WHERE e.tabela_id=$1 AND e.ativo AND e.formato IN (1,2,3,7,8) ORDER BY e.id`, [tabela_id, flour])).rows;
       if (!rows.length) throw new Error('Não há elementos numéricos configurados para esta tabela.');
@@ -126,7 +132,14 @@ router.post('/laudos', async (req, res) => {
     }
     const formatDate = s => s.split('-').reverse().join('/');
     const values = { cliente: `${cliente.codigo} - ${cliente.nome}`, produto: registered.produto.trim(), operador: operador.trim(), lote: formatDate(lote), emissao: formatDate(emissao), validade: validade.trim() };
-    const writes = { ...resultados };
+    // Valores antigos podem conter porcentagens com ponto. Preserve o sorteio e
+    // normalize somente a apresentação; decimais viram texto para garantir
+    // a vírgula independentemente da configuração regional do Excel.
+    const writes = Object.fromEntries(Object.entries(resultados).map(([address, value]) => {
+      if (typeof value === 'number' && !Number.isInteger(value)) return [address, String(value).replace('.', ',')];
+      if (typeof value === 'string' && /^-?\d+\.\d+\s*%$/.test(value)) return [address, value.replace('.', ',')];
+      return [address, value];
+    }));
     for (const field of campos) {
       const address = String(t.celulas?.[field] || '').toUpperCase();
       if (!cellPattern.test(address) || Object.hasOwn(writes, address)) throw new Error(`Confira a célula configurada para ${field}; ela está ausente ou em conflito.`);

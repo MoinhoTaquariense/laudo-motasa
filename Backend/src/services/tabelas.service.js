@@ -27,7 +27,8 @@ const update = async (id, { nome }) => {
 };
 
 const remove = async (id) => {
-  await db.query('DELETE FROM tabelas WHERE id = $1', [id]);
+  const result = await db.query('DELETE FROM tabelas WHERE id = $1', [id]);
+  return result.rowCount > 0;
 };
 
 module.exports = { findAll, findById, create, update, remove };

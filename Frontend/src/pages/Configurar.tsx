@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileSpreadsheet, Plus, Upload, Pencil, Grid2X2, Wheat, ListChecks } from 'lucide-react';
+import { FileSpreadsheet, Plus, Upload, Pencil, Trash2, Grid2X2, Wheat, ListChecks } from 'lucide-react';
 import AppShell, { PageHeading } from '@/components/AppShell';
-import { getTabelasSQL, createTabelaSQL, updateTabelaSQL, getElementsByTabelaSQL, uploadModelo, saveCelulas } from '@/lib/api';
+import { getTabelasSQL, createTabelaSQL, updateTabelaSQL, deleteTabelaSQL, getElementsByTabelaSQL, uploadModelo, saveCelulas } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type Tabela = {id:number; nome:string; modelo_nome:string | null; celulas:Record<string,string>};
@@ -13,16 +13,27 @@ export default function Configurar() {
   const [tabelas,setTabelas] = useState<Tabela[]>([]); const [selecionada,setSelecionada] = useState<Tabela | null>(null);
   const [nome,setNome] = useState(''); const [nameOpen,setNameOpen] = useState(false); const [cellOpen,setCellOpen] = useState(false);
   const [cells,setCells] = useState<Record<string,string>>(defaultCells); const [error,setError] = useState('');
+  const [excluindo, setExcluindo] = useState<number | null>(null);
   const load = () => getTabelasSQL().then(setTabelas).catch(e => setError(e.message));
   useEffect(() => { load(); }, []);
   const saveName = async (e:React.FormEvent) => { e.preventDefault(); try { if (selecionada) await updateTabelaSQL(selecionada.id,nome.trim()); else await createTabelaSQL(nome.trim()); setNameOpen(false); setError(''); await load(); } catch (e) { setError(e instanceof Error ? e.message : 'Erro ao salvar.'); } };
   const send = async (file?:File) => { if (!file || uploadId.current === null) return; try { await uploadModelo(uploadId.current,file); setError(''); await load(); } catch (e) { setError(e instanceof Error ? e.message : 'Erro no envio.'); } finally { if (fileRef.current) fileRef.current.value=''; } };
   const saveCells = async (e:React.FormEvent) => { e.preventDefault(); if (!selecionada) return; try { await saveCelulas(selecionada.id,cells); setCellOpen(false); setError(''); await load(); } catch (e) { setError(e instanceof Error ? e.message : 'Erro ao salvar células.'); } };
+  const excluir = async (t:Tabela) => {
+    if (!window.confirm(`Excluir a tabela "${t.nome}"? O modelo, as farinhas, os elementos, os intervalos e os resultados de laudos vinculados a ela também serão excluídos. Esta ação não pode ser desfeita.`)) return;
+    setExcluindo(t.id); setError('');
+    try {
+      await deleteTabelaSQL(t.id);
+      if (localStorage.getItem('tabelaId') === String(t.id)) ['tabelaId','tabelaNome','elementosTabela','elementoId','elementoNome','elementoFormato'].forEach(k => localStorage.removeItem(k));
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : 'Erro ao excluir tabela.'); }
+    finally { setExcluindo(null); }
+  };
   return <AppShell section="configuracao"><PageHeading eyebrow="Configurações" title="Tabelas e modelos" description="Organize seus modelos de planilha, farinhas e elementos em um só lugar." action={<button className="btn-primary" onClick={() => {setSelecionada(null);setNome('');setError('');setNameOpen(true);}}><Plus size={16}/> Nova tabela</button>} />
     <div className="section-label"><span>{String(tabelas.length).padStart(2,'0')}</span> Tabelas cadastradas</div>
     {!nameOpen && !cellOpen && error && <p role="alert" className="error-message" style={{marginBottom:18}}>{error}</p>}
     {tabelas.length === 0 ? <div className="panel empty-state"><FileSpreadsheet size={30}/><strong>Nenhuma tabela cadastrada</strong><p style={{marginTop:7}}>Crie uma tabela para começar a configurar seus laudos.</p></div> : <div className="table-card-grid">{tabelas.map(t => <article key={t.id} className="panel table-card">
-      <div className="table-card-top"><div className="icon-tile"><FileSpreadsheet size={19}/></div><div className="table-card-heading"><h3>{t.nome}</h3><p>{t.modelo_nome || 'Adicione uma planilha modelo'}</p></div><button type="button" className="btn-outline" aria-label={`Renomear ${t.nome}`} onClick={() => {setSelecionada(t);setNome(t.nome);setError('');setNameOpen(true);}}><Pencil size={14}/></button></div>
+      <div className="table-card-top"><div className="icon-tile"><FileSpreadsheet size={19}/></div><div className="table-card-heading"><h3>{t.nome}</h3><p>{t.modelo_nome || 'Adicione uma planilha modelo'}</p></div><button type="button" className="btn-outline" aria-label={`Renomear ${t.nome}`} onClick={() => {setSelecionada(t);setNome(t.nome);setError('');setNameOpen(true);}}><Pencil size={14}/></button><button type="button" className="btn-outline" aria-label={`Excluir ${t.nome}`} title="Excluir tabela" disabled={excluindo !== null} onClick={() => excluir(t)}><Trash2 size={14}/></button></div>
       <div className={`status-pill ${t.modelo_nome ? 'ready' : ''}`}>{t.modelo_nome ? 'Modelo adicionado' : 'Modelo pendente'}</div>
       <div className="table-card-actions">
         <button className="btn-outline" onClick={() => {uploadId.current=t.id;fileRef.current?.click();}}><Upload size={14}/> {t.modelo_nome ? 'Trocar Excel' : 'Enviar Excel'}</button>

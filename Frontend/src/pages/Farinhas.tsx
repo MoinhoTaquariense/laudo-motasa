@@ -21,7 +21,7 @@ export default function Farinhas() {
   const [visualizando, setVisualizando] = useState<Farinha | null>(null); const [detalhes, setDetalhes] = useState<DetalhesFarinha | null>(null);
   const [carregandoDetalhes, setCarregandoDetalhes] = useState(false); const [erroDetalhes, setErroDetalhes] = useState(''); const pedidoDetalhes = useRef(0);
   const [editandoElemento, setEditandoElemento] = useState<number | null>(null);
-  const [intervaloForm, setIntervaloForm] = useState({ min:'', max:'', passo_meio:false });
+  const [intervaloForm, setIntervaloForm] = useState({ min:'', max:'', passo_meio:false, passo_cinco_segundos:false });
   const [erroIntervalo, setErroIntervalo] = useState(''); const [salvandoIntervalo, setSalvandoIntervalo] = useState(false);
   const carregar = async () => { try { setItems(await listarFarinhas(idTabela)); } catch (e) { setErro(e instanceof Error ? e.message : 'Erro ao carregar farinhas.'); } };
   useEffect(() => { carregar(); getTabelasSQL().then(t => setNomeTabela(t.find(x => x.id === idTabela)?.nome ?? '')).catch(() => {}); }, [idTabela]);
@@ -36,7 +36,7 @@ export default function Farinhas() {
   };
   const editarIntervalo = (el:DetalhesFarinha['elementos'][number]) => {
     const i = el.intervalos[0]; setEditandoElemento(el.id); setErroIntervalo('');
-    setIntervaloForm({ min:i ? valorIntervalo(i.vmin_str,i.valormin,el.formato) : '', max:i ? valorIntervalo(i.vmax_str,i.valormax,el.formato) : '', passo_meio:i?.passo_meio ?? false });
+    setIntervaloForm({ min:i ? valorIntervalo(i.vmin_str,i.valormin,el.formato) : '', max:i ? valorIntervalo(i.vmax_str,i.valormax,el.formato) : '', passo_meio:i?.passo_meio ?? false, passo_cinco_segundos:i?.passo_cinco_segundos ?? false });
   };
   const salvarIntervalo = async (e:React.FormEvent, el:DetalhesFarinha['elementos'][number]) => {
     e.preventDefault(); if (!detalhes || salvandoIntervalo) return;
@@ -44,7 +44,8 @@ export default function Farinhas() {
     const min = parse(intervaloForm.min), max = parse(intervaloForm.max);
     if (!intervaloForm.min.trim() || !intervaloForm.max.trim() || !Number.isFinite(min) || !Number.isFinite(max) || min >= max) { setErroIntervalo('Informe limites válidos, com o valor final maior que o inicial.'); return; }
     if (intervaloForm.passo_meio && Math.ceil(min * 2 - 1e-8) > Math.floor(max * 2 + 1e-8)) { setErroIntervalo('Não há múltiplos de 0,50 dentro deste intervalo.'); return; }
-    const data = { elemento_id:el.id, farinha:detalhes.nome, valorMin:min, valorMax:max, vmin_str:intervaloForm.min.replace(',','.'), vmax_str:intervaloForm.max.replace(',','.'), passo_meio:intervaloForm.passo_meio };
+    if (intervaloForm.passo_cinco_segundos && Math.ceil(min / 5) > Math.floor(max / 5)) { setErroIntervalo('Não há valores de 5 em 5 segundos dentro deste intervalo.'); return; }
+    const data = { passo_cinco_segundos:intervaloForm.passo_cinco_segundos, elemento_id:el.id, farinha:detalhes.nome, valorMin:min, valorMax:max, vmin_str:intervaloForm.min.replace(',','.'), vmax_str:intervaloForm.max.replace(',','.'), passo_meio:intervaloForm.passo_meio };
     const pedido = pedidoDetalhes.current; setSalvandoIntervalo(true); setErroIntervalo('');
     try { if (el.intervalos.length) await updateIntervaloSQL(el.intervalos[0].id,data); else await createIntervaloSQL(data); }
     catch (err) { if (pedido === pedidoDetalhes.current) setErroIntervalo(err instanceof Error ? err.message : 'Erro ao salvar intervalo.'); setSalvandoIntervalo(false); return; }
@@ -65,10 +66,11 @@ export default function Farinhas() {
         {detalhes.elementos.length === 0 ? <p className="text-sm text-muted-foreground mt-2">Nenhum elemento cadastrado nesta tabela.</p> : <div className="space-y-3 mt-3">{detalhes.elementos.map(el => <div key={el.id} className="rounded-lg border p-3">
           <div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{el.nome}</p><p className="text-sm text-muted-foreground">Célula {el.posicao} · {tipos[el.formato] || 'Outro'}</p></div>
             {[1,2,3,7,8].includes(el.formato) && <button type="button" className="btn-outline" disabled={salvandoIntervalo || el.intervalos.length > 1} aria-label={`Editar intervalo de ${el.nome}`} title={el.intervalos.length > 1 ? 'Revise os intervalos duplicados na tela de intervalos.' : 'Editar intervalo'} onClick={() => editarIntervalo(el)}><Pencil size={14}/></button>}</div>
-          {el.intervalos.length ? el.intervalos.map(i => <div key={i.id} className="text-sm mt-1"><p>Intervalo: {valorIntervalo(i.vmin_str,i.valormin,el.formato)} a {valorIntervalo(i.vmax_str,i.valormax,el.formato)}</p>{i.passo_meio && <p>Valores de 0,50 em 0,50</p>}{i.cliente && <p>Cadastro anterior: {i.cliente}</p>}</div>) : <p className="text-sm mt-1">{[1,2,3,7,8].includes(el.formato) ? 'Intervalo não cadastrado para esta farinha.' : 'Este tipo não utiliza intervalo.'}</p>}
+          {el.intervalos.length ? el.intervalos.map(i => <div key={i.id} className="text-sm mt-1"><p>Intervalo: {valorIntervalo(i.vmin_str,i.valormin,el.formato)} a {valorIntervalo(i.vmax_str,i.valormax,el.formato)}</p>{i.passo_meio && <p>Valores de 0,50 em 0,50</p>}{i.passo_cinco_segundos && <p>Tempo de 5 em 5 segundos</p>}{i.cliente && <p>Cadastro anterior: {i.cliente}</p>}</div>) : <p className="text-sm mt-1">{[1,2,3,7,8].includes(el.formato) ? 'Intervalo não cadastrado para esta farinha.' : 'Este tipo não utiliza intervalo.'}</p>}
           {el.intervalos.length > 1 && <p className="text-sm text-red-700 mt-1">Há mais de um intervalo para este elemento; revise os cadastros na tela de intervalos.</p>}
           {editandoElemento === el.id && <form onSubmit={e => salvarIntervalo(e,el)} className="dialog-form"><div className="form-grid">{([['min','Valor inicial'],['max','Valor final']] as const).map(([campo,label]) => <div className="form-field" key={campo}><label htmlFor={`detalhe-${el.id}-${campo}`}>{label}</label><input id={`detalhe-${el.id}-${campo}`} required placeholder={el.formato === 7 ? 'MM:SS' : 'Ex.: 13,50'} value={intervaloForm[campo]} onChange={e => setIntervaloForm({...intervaloForm,[campo]:e.target.value})}/></div>)}</div>
             {[1,3,8].includes(el.formato) && <label style={{display:'flex',alignItems:'center',gap:8}}><input type="checkbox" checked={intervaloForm.passo_meio} onChange={e => setIntervaloForm({...intervaloForm,passo_meio:e.target.checked})}/> Somente valores de 0,50 em 0,50</label>}
+            {el.formato === 7 && <label style={{display:'flex',alignItems:'center',gap:8}}><input type="checkbox" checked={intervaloForm.passo_cinco_segundos} onChange={e => setIntervaloForm({...intervaloForm,passo_cinco_segundos:e.target.checked})}/> De 5 em 5 segundos (ex.: 06:00, 06:05, 06:10)</label>}
             {erroIntervalo && <p role="alert" className="error-message">{erroIntervalo}</p>}<div className="dialog-actions"><button type="button" className="btn-outline" disabled={salvandoIntervalo} onClick={() => setEditandoElemento(null)}>Cancelar</button><button type="submit" className="btn-primary" disabled={salvandoIntervalo}>{salvandoIntervalo ? 'Salvando...' : 'Salvar intervalo'}</button></div></form>}
         </div>)}</div>}
       </div></div>}

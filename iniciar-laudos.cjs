@@ -66,7 +66,7 @@ async function main() {
   const pool = new Pool({ host: process.env.DB_HOST, port: process.env.DB_PORT, user: process.env.DB_USER, password: process.env.DB_PASSWORD, database: process.env.DB_NAME, connectionTimeoutMillis: 5000 });
   try {
     await pool.query('SELECT modelo_nome, celulas FROM tabelas LIMIT 1');
-    await pool.query('SELECT farinha, vmin_str, vmax_str, passo_meio FROM intervalos LIMIT 1');
+    await pool.query('SELECT farinha, vmin_str, vmax_str, passo_meio, passo_cinco_segundos FROM intervalos LIMIT 1');
     await pool.query('SELECT nome, produto FROM farinhas LIMIT 1');
     await pool.query('SELECT valores FROM laudos_gerados LIMIT 1');
   } catch (error) {

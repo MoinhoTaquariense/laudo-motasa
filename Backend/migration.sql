@@ -13,6 +13,7 @@ ALTER TABLE elementos DROP CONSTRAINT IF EXISTS elementos_formato_check;
 ALTER TABLE elementos ADD CONSTRAINT elementos_formato_check CHECK (formato BETWEEN 1 AND 8);
 ALTER TABLE intervalos ADD COLUMN IF NOT EXISTS farinha TEXT;
 ALTER TABLE intervalos ADD COLUMN IF NOT EXISTS passo_meio BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE intervalos ADD COLUMN IF NOT EXISTS passo_cinco_segundos BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE intervalos ADD COLUMN IF NOT EXISTS vmin_str VARCHAR(50);
 ALTER TABLE intervalos ADD COLUMN IF NOT EXISTS vmax_str VARCHAR(50);
 UPDATE intervalos SET farinha = produto WHERE farinha IS NULL AND produto IS NOT NULL;

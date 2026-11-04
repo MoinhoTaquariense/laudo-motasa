@@ -63,8 +63,8 @@ router.post('/:id/importar', async (req, res) => {
       const targetEl = dstEls.get(key(srcById.get(i.elemento_id).nome));
       const farinha = dstFlour.get(key(i.farinha)).nome;
       const existing = dstIntervalMap.get(`${targetEl.id}:${key(farinha)}`);
-      if (existing) await conn.query('UPDATE intervalos SET valormin=$1,valormax=$2,vmin_str=$3,vmax_str=$4,passo_meio=$5 WHERE id=$6',[i.valormin,i.valormax,i.vmin_str,i.vmax_str,i.passo_meio,existing.id]);
-      else await conn.query("INSERT INTO intervalos (elemento_id,cliente,produto,farinha,valormin,valormax,vmin_str,vmax_str,passo_meio) VALUES ($1,'',$2::text,$2::text,$3,$4,$5,$6,$7)",[targetEl.id,farinha,i.valormin,i.valormax,i.vmin_str,i.vmax_str,i.passo_meio]);
+      if (existing) await conn.query('UPDATE intervalos SET valormin=$1,valormax=$2,vmin_str=$3,vmax_str=$4,passo_meio=$5,passo_cinco_segundos=$6 WHERE id=$7',[i.valormin,i.valormax,i.vmin_str,i.vmax_str,i.passo_meio,i.passo_cinco_segundos,existing.id]);
+      else await conn.query("INSERT INTO intervalos (elemento_id,cliente,produto,farinha,valormin,valormax,vmin_str,vmax_str,passo_meio,passo_cinco_segundos) VALUES ($1,'',$2::text,$2::text,$3,$4,$5,$6,$7,$8)",[targetEl.id,farinha,i.valormin,i.valormax,i.vmin_str,i.vmax_str,i.passo_meio,i.passo_cinco_segundos]);
       inter++;
     }
     await conn.query('COMMIT');
