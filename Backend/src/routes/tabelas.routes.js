@@ -4,6 +4,7 @@ const ctrl = require('../controllers/tabelas.controller');
 router.get('/',       ctrl.getAll);
 router.get('/:id',    ctrl.getById);
 router.post('/',      ctrl.create);
+router.post('/:id/clonar', ctrl.clonar);
 router.put('/:id',    ctrl.update);
 router.delete('/:id', ctrl.remove);
 

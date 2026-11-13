@@ -17,6 +17,7 @@ async function req<T>(url: string, options?: RequestInit): Promise<T> {
 // ── Tabelas ──────────────────────────────────────────────────
 export const getTabelasSQL        = ()                => req<any[]>('/tabelas');
 export const createTabelaSQL      = (nome: string)    => req<any>('/tabelas', { method: 'POST', body: JSON.stringify({ nome }) });
+export const clonarTabelaSQL      = (id: number, nome: string) => req<any>(`/tabelas/${id}/clonar`, { method: 'POST', body: JSON.stringify({ nome }) });
 export const updateTabelaSQL      = (id: number, nome: string) => req<any>(`/tabelas/${id}`, { method: 'PUT', body: JSON.stringify({ nome }) });
 export const deleteTabelaSQL      = (id: number)      => req<void>(`/tabelas/${id}`, { method: 'DELETE' });
 
