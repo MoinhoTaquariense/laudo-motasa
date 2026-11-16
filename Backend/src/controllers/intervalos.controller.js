@@ -83,7 +83,8 @@ const update = async (req, res) => {
 };
 
 const remove = async (req, res) => {
-  try { await svc.remove(req.params.id); res.status(204).send(); }
+  if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ error: 'Intervalo inválido.' });
+  try { if (!await svc.remove(req.params.id)) return res.status(404).json({ error: 'Intervalo não encontrado.' }); res.status(204).send(); }
   catch (err) { res.status(500).json({ error: err.message }); }
 };
 

@@ -39,7 +39,8 @@ const update = async (id, { nome, posicao, formato, tabela_id }) => {
 };
 
 const remove = async (id) => {
-  await db.query('DELETE FROM elementos WHERE id = $1', [id]);
+  const result = await db.query('DELETE FROM elementos WHERE id = $1', [id]);
+  return result.rowCount > 0;
 };
 
 module.exports = { findByTabela, findById, create, update, remove };

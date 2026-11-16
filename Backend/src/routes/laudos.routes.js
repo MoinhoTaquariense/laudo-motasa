@@ -116,6 +116,13 @@ router.post('/laudos', async (req, res) => {
     if (lote2 && !cellPattern.test(String(t.celulas?.lote2 || '').toUpperCase())) throw new Error('Configure a célula da segunda data do lote em Configurações → Células antes de gerar o laudo.');
     const existing = (await connection.query('SELECT valores FROM laudos_gerados WHERE tabela_id=$1 AND lower(farinha)=lower($2) AND lote=$3', [tabela_id, flour, lote])).rows[0];
     let resultados = existing?.valores;
+    if (resultados) {
+      // O histórico permanece salvo, mas elementos excluídos não devem voltar
+      // a ser preenchidos ao emitir novamente um laudo do mesmo lote.
+      const ativos = (await connection.query('SELECT upper(posicao) AS posicao FROM elementos WHERE tabela_id=$1 AND ativo AND formato IN (1,2,3,7,8)', [tabela_id])).rows;
+      const posicoesAtivas = new Set(ativos.map(e => e.posicao));
+      resultados = Object.fromEntries(Object.entries(resultados).filter(([posicao]) => posicoesAtivas.has(posicao.toUpperCase())));
+    }
     if (!resultados) {
       const rows = (await connection.query(`SELECT e.id, e.nome, e.posicao, e.formato, i.id AS intervalo_id, i.valormin, i.valormax, i.vmin_str, i.vmax_str, i.passo_meio, i.passo_cinco_segundos
         FROM elementos e LEFT JOIN intervalos i ON i.elemento_id=e.id AND i.ativo AND lower(trim(i.farinha))=lower($2)

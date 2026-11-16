@@ -43,7 +43,8 @@ const update = async (id, { farinha, valorMin, valorMax, vmin_str, vmax_str, pas
 };
 
 const remove = async (id) => {
-  await db.query('DELETE FROM intervalos WHERE id = $1', [id]);
+  const result = await db.query('DELETE FROM intervalos WHERE id = $1', [id]);
+  return result.rowCount > 0;
 };
 
 module.exports = { findByElemento, findById, create, update, remove };

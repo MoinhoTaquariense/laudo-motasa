@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Search, Wheat, Pencil, Trash2, Eye } from 'lucide-react';
 import AppShell, { BackLink, PageHeading } from '@/components/AppShell';
-import { criarFarinha, excluirFarinha, listarFarinhas, renomearFarinha, getTabelasSQL, detalhesFarinha, createIntervaloSQL, updateIntervaloSQL, type Farinha, type DetalhesFarinha } from '@/lib/api';
+import { criarFarinha, excluirFarinha, listarFarinhas, renomearFarinha, getTabelasSQL, detalhesFarinha, createIntervaloSQL, updateIntervaloSQL, deleteIntervaloSQL, type Farinha, type DetalhesFarinha } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const tipos:Record<number,string> = {1:'Porcentagem',2:'Inteiro',3:'Decimal',4:'Número + texto',5:'Texto + potência',6:'Texto',7:'Tempo',8:'Joules (J)'};
@@ -53,6 +53,15 @@ export default function Farinhas() {
     catch { if (pedido === pedidoDetalhes.current) { setEditandoElemento(null); setErroDetalhes('Intervalo salvo, mas não foi possível atualizar a visualização. Feche e abra novamente.'); } }
     finally { setSalvandoIntervalo(false); }
   };
+  const excluirIntervalo = async (el:DetalhesFarinha['elementos'][number], id:number) => {
+    if (!detalhes || salvandoIntervalo || !window.confirm(`Excluir o intervalo de "${el.nome}" para a farinha "${detalhes.nome}"?`)) return;
+    const pedido = pedidoDetalhes.current; setSalvandoIntervalo(true); setErroDetalhes(''); setErroIntervalo('');
+    try { await deleteIntervaloSQL(id); }
+    catch (err) { if (pedido === pedidoDetalhes.current) setErroDetalhes(err instanceof Error ? err.message : 'Erro ao excluir intervalo.'); setSalvandoIntervalo(false); return; }
+    try { const resultado = await detalhesFarinha(detalhes.id); if (pedido === pedidoDetalhes.current) { setDetalhes(resultado); setEditandoElemento(null); } }
+    catch { if (pedido === pedidoDetalhes.current) setErroDetalhes('Intervalo excluído, mas não foi possível atualizar a visualização. Feche e abra novamente.'); }
+    finally { setSalvandoIntervalo(false); }
+  };
   const filtered = items.filter(item => item.nome.toLocaleLowerCase('pt-BR').includes(busca.toLocaleLowerCase('pt-BR')));
   return <AppShell section="configuracao"><BackLink onClick={() => navigate('/configurar')}>Voltar para tabelas</BackLink>
     <PageHeading eyebrow={nomeTabela || 'Configurações'} title="Farinhas" description="Cadastre as farinhas que poderão ser usadas nos intervalos e na emissão dos laudos." action={<button className="btn-primary" onClick={() => abrir(null)}><Plus size={16}/> Nova farinha</button>} />
@@ -66,7 +75,7 @@ export default function Farinhas() {
         {detalhes.elementos.length === 0 ? <p className="text-sm text-muted-foreground mt-2">Nenhum elemento cadastrado nesta tabela.</p> : <div className="space-y-3 mt-3">{detalhes.elementos.map(el => <div key={el.id} className="rounded-lg border p-3">
           <div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{el.nome}</p><p className="text-sm text-muted-foreground">Célula {el.posicao} · {tipos[el.formato] || 'Outro'}</p></div>
             {[1,2,3,7,8].includes(el.formato) && <button type="button" className="btn-outline" disabled={salvandoIntervalo || el.intervalos.length > 1} aria-label={`Editar intervalo de ${el.nome}`} title={el.intervalos.length > 1 ? 'Revise os intervalos duplicados na tela de intervalos.' : 'Editar intervalo'} onClick={() => editarIntervalo(el)}><Pencil size={14}/></button>}</div>
-          {el.intervalos.length ? el.intervalos.map(i => <div key={i.id} className="text-sm mt-1"><p>Intervalo: {valorIntervalo(i.vmin_str,i.valormin,el.formato)} a {valorIntervalo(i.vmax_str,i.valormax,el.formato)}</p>{i.passo_meio && <p>Valores de 0,50 em 0,50</p>}{i.passo_cinco_segundos && <p>Tempo de 5 em 5 segundos</p>}{i.cliente && <p>Cadastro anterior: {i.cliente}</p>}</div>) : <p className="text-sm mt-1">{[1,2,3,7,8].includes(el.formato) ? 'Intervalo não cadastrado para esta farinha.' : 'Este tipo não utiliza intervalo.'}</p>}
+          {el.intervalos.length ? el.intervalos.map(i => <div key={i.id} className="text-sm mt-1"><div className="flex items-center justify-between gap-2"><p>Intervalo: {valorIntervalo(i.vmin_str,i.valormin,el.formato)} a {valorIntervalo(i.vmax_str,i.valormax,el.formato)}</p><button type="button" className="btn-outline" disabled={salvandoIntervalo} aria-label={`Excluir intervalo ${valorIntervalo(i.vmin_str,i.valormin,el.formato)} a ${valorIntervalo(i.vmax_str,i.valormax,el.formato)} de ${el.nome}`} title="Excluir intervalo" onClick={() => excluirIntervalo(el,i.id)}><Trash2 size={14}/></button></div>{i.passo_meio && <p>Valores de 0,50 em 0,50</p>}{i.passo_cinco_segundos && <p>Tempo de 5 em 5 segundos</p>}{i.cliente && <p>Cadastro anterior: {i.cliente}</p>}</div>) : <p className="text-sm mt-1">{[1,2,3,7,8].includes(el.formato) ? 'Intervalo não cadastrado para esta farinha.' : 'Este tipo não utiliza intervalo.'}</p>}
           {el.intervalos.length > 1 && <p className="text-sm text-red-700 mt-1">Há mais de um intervalo para este elemento; revise os cadastros na tela de intervalos.</p>}
           {editandoElemento === el.id && <form onSubmit={e => salvarIntervalo(e,el)} className="dialog-form"><div className="form-grid">{([['min','Valor inicial'],['max','Valor final']] as const).map(([campo,label]) => <div className="form-field" key={campo}><label htmlFor={`detalhe-${el.id}-${campo}`}>{label}</label><input id={`detalhe-${el.id}-${campo}`} required placeholder={el.formato === 7 ? 'MM:SS' : 'Ex.: 13,50'} value={intervaloForm[campo]} onChange={e => setIntervaloForm({...intervaloForm,[campo]:e.target.value})}/></div>)}</div>
             {[1,3,8].includes(el.formato) && <label style={{display:'flex',alignItems:'center',gap:8}}><input type="checkbox" checked={intervaloForm.passo_meio} onChange={e => setIntervaloForm({...intervaloForm,passo_meio:e.target.checked})}/> Somente valores de 0,50 em 0,50</label>}
